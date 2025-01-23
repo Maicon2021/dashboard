@@ -42,8 +42,9 @@ public class Ticket {
         this.closingDate = closingDate;
     }
 
-    public static Ticket newTicket(final String title, final Client client, final Module module, final LocalDate openingDate, final LocalDate closingDate) {
-        return new Ticket(null, title, client, module, openingDate, null);
+    public static Ticket newTicket(final String title, final Client client, final Module module) {
+        final LocalDate date = LocalDate.now();
+        return new Ticket(null, title, client, module, date, null);
     }
 
     public Long getId() {

@@ -11,18 +11,18 @@ public class Module {
     private Long id;
 
     @Column(name = "NAME", nullable = false)
-    private String moduleName;
+    private String module;
 
     public Module() {
     }
 
-    public Module(Long id, String moduleName) {
+    public Module(Long id, String module) {
         this.id = id;
-        this.moduleName = moduleName;
+        this.module = module;
     }
 
-    public static Module newModule(final String moduleName) {
-        return new Module(null, moduleName);
+    public static Module newModule(final String module) {
+        return new Module(null, module);
     }
 
     public Long getId() {
@@ -32,11 +32,11 @@ public class Module {
         this.id = id;
     }
 
-    public String getModuleName() {
-        return moduleName;
+    public String getModule() {
+        return module;
     }
     public void setModuleName(String moduleName) {
-        this.moduleName = moduleName;
+        this.module = module;
     }
 
 
