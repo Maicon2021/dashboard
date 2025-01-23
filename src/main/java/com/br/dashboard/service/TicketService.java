@@ -2,16 +2,20 @@ package com.br.dashboard.service;
 
 import com.br.dashboard.dto.create.ticket.CreateTicketRequest;
 import com.br.dashboard.dto.create.ticket.CreateTicketResponse;
+import com.br.dashboard.dto.list.ticket.ListTicketsPerClientResponse;
+import com.br.dashboard.dto.list.ticket.ListTicketsPerGroupedByResponse;
+import com.br.dashboard.dto.list.ticket.ListTicketsPerModuleResponse;
+import com.br.dashboard.dto.list.ticket.TicketResponse;
+import com.br.dashboard.dto.update.ticket.UpdateTicketRequest;
+import com.br.dashboard.dto.update.ticket.UpdateTicketResponse;
 import com.br.dashboard.entity.Ticket;
 import com.br.dashboard.repository.ClientRepository;
 import com.br.dashboard.repository.ModuleRepository;
 import com.br.dashboard.repository.TicketRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TicketService {
@@ -42,35 +46,92 @@ public class TicketService {
 
     }
 
-    public ResponseEntity<Ticket> getTicket(Long id) {
-        return ResponseEntity.ok(ticketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(String.format("Ticket %s not found", id))));
+    public TicketResponse findById(Long id) {
+        final var ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        return TicketResponse.output(ticket);
     }
 
-    public ResponseEntity<?> updateTicket(Long id, Ticket ticket) {
+    public UpdateTicketResponse update(Long id, UpdateTicketRequest request) {
 
-        Optional<Ticket> existingTicket = ticketRepository.findById(id);
+        final var ticket = ticketRepository.findById(id).orElseThrow(
+                () -> new RuntimeException("Ticket not found")
+        );
 
-        if(existingTicket.isPresent()) {
-            return ResponseEntity.ok(ticketRepository.save(ticket));
-        } else {
-            String errorMessage = String.format("Ticket with ID %s not found", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
+        ticket.updateTicket(request.title());
+
+        final var ticketUpdate = ticketRepository.save(ticket);
+
+        return new UpdateTicketResponse(ticketUpdate.getId());
+
+    }
+
+
+    public List<TicketResponse> listAllTickets() {
+        return ticketRepository.findAll().stream()
+                .map(TicketResponse::output)
+                .toList();
+
+        /* Refactor
+        //List<Ticket> tickets = ticketRepository.findAll();
+        //List<TicketResponse> ticketsResponse = new ArrayList<>();
+        //for(Ticket ticket : tickets) {
+        //   ticketsResponse.add(TicketResponse.output(ticket));
+        //}
+        //return ticketsResponse;
+        */
+
+    }
+
+    public void delete(Long id) {
+        final var ticket = ticketRepository.findById(id).orElseThrow(
+                () -> new RuntimeException("Ticket not found")
+        );
+        ticketRepository.delete(ticket);
+    }
+
+    public ListTicketsPerGroupedByResponse listTicketsGroupedByModuleAndClient(final Integer month, final Integer year)  {
+
+        final var totalTickets = ticketRepository.findAllBYMonthAndYear(month, year);
+        final var totalTicketsPerClient = totalTicketsPerClient(totalTickets);
+        final var totalTicketsPerModule = totalTicketsPerModule(totalTickets);
+
+        return ListTicketsPerGroupedByResponse.output(totalTickets, totalTicketsPerClient, totalTicketsPerModule);
+
+    }
+
+    private List<ListTicketsPerClientResponse> totalTicketsPerClient(List<Ticket> tickets) {
+
+        if (tickets.isEmpty()) {
+            return List.of();
         }
 
+        return tickets.stream()
+                .collect(Collectors.groupingBy(ticket -> ticket.getClient().getId()))
+                .entrySet()
+                .stream()
+                .map(entry -> new ListTicketsPerClientResponse(
+                        entry.getKey(),
+                        entry.getValue().getFirst().getClient().getName(),
+                        entry.getValue().size()
+                )).collect(Collectors.toList());
     }
 
-    public ResponseEntity<Ticket> listTicketId(Long id) {
-        return ResponseEntity.ok(ticketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(String.format("Ticket %s not found", id))));
-    }
+    private List<ListTicketsPerModuleResponse> totalTicketsPerModule(List<Ticket> tickets) {
 
-    public ResponseEntity<List<Ticket>> listAllTickets() {
-        List<Ticket> tickets = ticketRepository.findAll();
-
-        if(tickets.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        if (tickets.isEmpty()) {
+            return List.of();
         }
-        return ResponseEntity.ok(tickets);
+
+        return tickets.stream()
+                .collect(Collectors.groupingBy(ticket -> ticket.getModule().getId()))
+                .entrySet()
+                .stream()
+                .map(entry -> new ListTicketsPerModuleResponse(
+                        entry.getKey(),
+                        entry.getValue().getFirst().getModule().getName(),
+                        entry.getValue().size()
+                )).collect(Collectors.toList());
     }
 }

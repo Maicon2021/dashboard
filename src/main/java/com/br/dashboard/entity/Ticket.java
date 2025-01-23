@@ -47,6 +47,10 @@ public class Ticket {
         return new Ticket(null, title, client, module, date, null);
     }
 
+    public void updateTicket(final String title) {
+        this.title = title;
+    }
+
     public Long getId() {
         return id;
     }

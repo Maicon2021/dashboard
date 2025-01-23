@@ -11,14 +11,14 @@ public class Module {
     private Long id;
 
     @Column(name = "NAME", nullable = false)
-    private String module;
+    private String name;
 
     public Module() {
     }
 
     public Module(Long id, String module) {
         this.id = id;
-        this.module = module;
+        this.name = module;
     }
 
     public static Module newModule(final String module) {
@@ -32,11 +32,12 @@ public class Module {
         this.id = id;
     }
 
-    public String getModule() {
-        return module;
+    public String getName() {
+        return name;
     }
+
     public void setModuleName(String moduleName) {
-        this.module = module;
+        this.name = name;
     }
 
 
