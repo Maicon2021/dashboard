@@ -25,6 +25,10 @@ public class Client {
         return new Client(null, name);
     }
 
+    public void updateClient (final String name) {
+        this.name = name;
+    }
+
 
     public Long getId() {
         return id;
